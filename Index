@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Raptor Alert — Demo</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --lockout:#2563EB; --lockdown:#DC2626; --evacuate:#16A34A;
+  --shelter:#EA580C; --hold:#7C3AED;
+  --bg:#F2F2F7; --card:#fff; --text:#1C1C1E; --muted:#6E6E73;
+  --border:#E5E5EA; --orange:#FF9500; --green:#16A34A; --red:#DC2626;
+}
+body { background:#C8C8CC; display:flex; justify-content:center; padding:20px; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif; min-height:100vh; }
+.phone { width:390px; background:var(--bg); border-radius:50px; box-shadow:0 30px 80px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.2); overflow:hidden; display:flex; flex-direction:column; min-height:844px; }
+.status-bar { background:#fff; padding:14px 24px 10px; display:flex; justify-content:space-between; align-items:center; font-size:15px; font-weight:600; color:var(--text); flex-shrink:0; }
+.si { display:flex; align-items:center; gap:6px; }
+.screen { display:none; flex:1; flex-direction:column; overflow:hidden; }
+.screen.active { display:flex; }
+
+/* ── NAV BAR ── */
+.nav { background:#fff; padding:14px 20px 12px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(–border); flex-shrink:0; }
+.nav-title { font-size:17px; font-weight:600; }
+.back { color:#007AFF; font-size:17px; cursor:pointer; min-width:40px; }
+.nav-r { min-width:40px; text-align:right; }
+
+/* ── SETUP ── */
+#setupScreen { background:#fff; padding:36px 28px; align-items:center; overflow-y:auto; }
+.logo { width:68px; height:68px; background:#C8102E; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:900; color:#fff; margin:0 auto 18px; }
+.setup-title { font-size:22px; font-weight:700; margin-bottom:6px; text-align:center; }
+.setup-sub { font-size:14px; color:var(–muted); margin-bottom:28px; text-align:center; line-height:1.5; }
+.sf { width:100%; margin-bottom:13px; }
+.sf label { display:block; font-size:11px; font-weight:700; color:var(–muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+.sf input { width:100%; background:var(–bg); border:1.5px solid var(–border); border-radius:10px; padding:11px 14px; font-size:16px; color:var(–text); outline:none; font-family:inherit; transition:border-color .2s; }
+.sf input:focus { border-color:var(–orange); }
+.btn-primary { width:100%; background:var(–orange); color:#fff; border:none; border-radius:12px; padding:15px; font-size:17px; font-weight:600; cursor:pointer; font-family:inherit; }
+.btn-primary:active { opacity:.85; }
+.btn-primary:disabled { background:#C7C7CC; cursor:not-allowed; }
+
+/* ── HOME ── */
+#homeScreen { background:#fff; }
+.srp-scroll { flex:1; overflow-y:auto; padding-bottom:8px; }
+.srp-grid { padding:16px 20px 0; display:grid; grid-template-columns:1fr 1fr; gap:20px 14px; justify-items:center; }
+.srp-btn { display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; }
+.srp-circle { width:136px; height:136px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:transform .12s; box-shadow:0 4px 14px rgba(0,0,0,.15); }
+.srp-btn:active .srp-circle { transform:scale(.93); }
+.srp-circle svg { width:68px; height:68px; }
+.srp-lbl { font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+.hold-row { grid-column:1/-1; display:flex; justify-content:center; }
+.team-assist { margin:16px 20px 6px; background:#fff; border:1.5px solid var(–border); border-radius:14px; padding:15px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:14px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
+.tab-bar { background:#fff; border-top:1px solid var(–border); display:flex; padding:8px 0 22px; flex-shrink:0; }
+.tab-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; font-size:10px; font-weight:500; color:var(–muted); }
+.tab-item.active { color:var(–orange); }
+.tab-item svg { width:24px; height:24px; }
+
+/* ── HAMBURGER MENU ── */
+.menu-overlay { display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.4); z-index:50; }
+.menu-overlay.open { display:block; }
+.side-menu { position:absolute; top:0; left:-100%; width:75%; height:100%; background:#fff; z-index:51; transition:left .25s ease; padding-top:60px; }
+.side-menu.open { left:0; }
+.menu-header { padding:16px 20px 12px; border-bottom:1px solid var(–border); }
+.menu-school { font-size:16px; font-weight:700; }
+.menu-user { font-size:13px; color:var(–muted); margin-top:3px; }
+.menu-item { padding:16px 20px; display:flex; align-items:center; gap:14px; border-bottom:1px solid var(–bg); cursor:pointer; font-size:16px; font-weight:500; }
+.menu-item:active { background:var(–bg); }
+.menu-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.menu-close { position:absolute; top:16px; right:16px; background:none; border:none; font-size:22px; cursor:pointer; color:var(–muted); z-index:52; }
+
+/* ── CONFIRM ── */
+#confirmScreen { background:#1C1C1E; }
+.conf-nav { padding:20px; text-align:center; color:#fff; font-size:17px; font-weight:600; }
+.conf-body { flex:1; display:flex; flex-direction:column; align-items:center; padding:12px 32px 36px; }
+.conf-icon { width:110px; height:110px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:18px; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+.conf-icon svg { width:58px; height:58px; }
+.conf-title { color:#fff; font-size:24px; font-weight:800; text-align:center; margin-bottom:16px; }
+.subtype-pill { background:#3A3A3C; color:#EBEBF5; border:none; border-radius:20px; padding:8px 20px; font-size:14px; cursor:pointer; font-family:inherit; margin-bottom:44px; }
+.slide-wrap { width:100%; height:62px; background:#3A3A3C; border-radius:31px; position:relative; overflow:hidden; margin-bottom:24px; user-select:none; }
+.slide-label { position:absolute; top:50%; right:20px; transform:translateY(-50%); color:rgba(255,255,255,.65); font-size:15px; font-weight:600; pointer-events:none; white-space:nowrap; }
+.slide-handle { position:absolute; left:3px; top:3px; width:56px; height:56px; border-radius:50%; background:#fff; cursor:grab; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(0,0,0,.35); z-index:2; }
+.cancel-circle { width:54px; height:54px; border-radius:50%; background:#3A3A3C; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:20px; }
+.cancel-lbl { color:rgba(255,255,255,.55); font-size:12px; margin-top:4px; }
+
+/* ── ACTIVE INCIDENT ── */
+#activeScreen { background:var(–bg); }
+.inc-scroll { flex:1; overflow-y:auto; }
+.inc-header { background:#fff; padding:18px 20px; display:flex; flex-direction:column; align-items:center; text-align:center; border-bottom:1px solid var(–border); }
+.inc-icon { width:84px; height:84px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:10px; box-shadow:0 4px 14px rgba(0,0,0,.15); }
+.inc-icon svg { width:44px; height:44px; }
+.inc-title { font-size:20px; font-weight:800; margin-bottom:2px; }
+.inc-school { font-size:15px; font-weight:600; margin-bottom:4px; }
+.inc-meta { font-size:13px; color:var(–muted); margin-bottom:6px; }
+.inc-map { color:#007AFF; font-size:13px; font-weight:500; cursor:pointer; }
+.qt-label { padding:16px 20px 8px; font-size:11px; font-weight:700; color:var(–orange); letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+.qt-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px; }
+.qt-btn { background:#fff; border:1.5px solid var(–border); border-radius:14px; padding:18px 12px; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-size:14px; font-weight:600; }
+.qt-btn:active { background:var(–bg); }
+.qt-btn svg { width:24px; height:24px; }
+.full-btn { margin:10px 16px 0; background:#fff; border:1.5px solid var(–border); border-radius:14px; padding:15px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; font-size:14px; font-weight:600; }
+.full-btn:active { background:var(–bg); }
+.full-btn svg { width:20px; height:20px; flex-shrink:0; }
+.full-btn:last-of-type { margin-bottom:14px; }
+
+/* ── ROSTER ── */
+#rosterScreen { background:var(–bg); }
+.roster-top { background:#fff; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(–border); }
+.ri-class { font-size:14px; font-weight:600; }
+.ri-name { font-size:12px; color:var(–muted); margin-top:1px; }
+.ri-count { font-size:13px; color:var(–muted); }
+.ri-count b { color:var(–green); }
+.sel-row { background:var(–bg); padding:7px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(–border); }
+.sel-all-btn { color:#007AFF; font-size:14px; background:none; border:none; cursor:pointer; font-family:inherit; }
+.sel-ct { font-size:13px; color:var(–muted); }
+.r-scroll { flex:1; overflow-y:auto; }
+.r-item { background:#fff; padding:11px 20px; display:flex; align-items:center; gap:11px; border-bottom:1px solid var(–border); cursor:pointer; }
+.r-item:active { background:#F9F9F9; }
+.r-item.is-acc { opacity:.6; cursor:default; }
+.r-check { width:24px; height:24px; border-radius:50%; border:2px solid #C7C7CC; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+.r-check.on { background:var(–green); border-color:var(–green); }
+.r-check.on::after { content:’’; display:block; width:9px; height:5px; border-left:2.5px solid #fff; border-bottom:2.5px solid #fff; transform:rotate(-45deg) translateY(-1px); }
+.r-avatar { width:34px; height:34px; border-radius:50%; background:#E5E5EA; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#555; flex-shrink:0; }
+.r-name { font-size:15px; flex:1; }
+.r-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+.r-badge.acc { background:#D1FAE5; color:#065F46; }
+.r-badge.unk { background:#FEF3C7; color:#92400E; }
+.r-badge.abs { background:#E5E7EB; color:#374151; }
+.r-badge.mis { background:#FEE2E2; color:#991B1B; }
+.r-badge.inj { background:#FEF3C7; color:#92400E; }
+.update-bar { background:#fff; border-top:1px solid var(–border); padding:12px 20px 26px; flex-shrink:0; }
+
+/* ── STATUS PICKER ── */
+#statusPickScreen { background:var(–bg); }
+.status-options { padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+.status-opt { background:#fff; border:2px solid var(–border); border-radius:14px; padding:16px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:border-color .15s; }
+.status-opt:active { background:var(–bg); }
+.status-opt.sel { border-color:var(–orange); background:#FFF9F0; }
+.so-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; }
+.so-label { font-size:16px; font-weight:600; }
+.so-desc { font-size:12px; color:var(–muted); margin-top:2px; }
+
+/* ── LOCATION ── */
+#locationScreen { background:var(–bg); }
+.loc-hdr { background:#fff; padding:16px 20px 12px; border-bottom:1px solid var(–border); }
+.loc-title { font-size:18px; font-weight:700; margin-bottom:3px; }
+.loc-sub { font-size:13px; color:var(–muted); }
+.loc-item { background:#fff; padding:13px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(–border); cursor:pointer; }
+.loc-item:active { background:var(–bg); }
+.loc-name { font-size:15px; font-weight:500; }
+.loc-type { font-size:12px; color:var(–muted); margin-top:1px; }
+.loc-radio { width:22px; height:22px; border-radius:50%; border:2px solid #C7C7CC; display:flex; align-items:center; justify-content:center; }
+.loc-radio.sel { border-color:var(–orange); background:var(–orange); }
+.loc-radio.sel::after { content:’’; display:block; width:8px; height:8px; background:#fff; border-radius:50%; }
+
+/* ── SUCCESS ── */
+#successScreen { background:#fff; align-items:center; justify-content:center; text-align:center; padding:40px 28px; }
+.suc-check { width:76px; height:76px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; color:#fff; font-size:36px; animation:pop .4s cubic-bezier(.175,.885,.32,1.275); }
+@keyframes pop { from{transform:scale(0)}to{transform:scale(1)} }
+.suc-title { font-size:20px; font-weight:700; margin-bottom:6px; }
+.suc-sub { font-size:14px; color:var(–muted); line-height:1.5; margin-bottom:5px; }
+.suc-loc { font-size:14px; font-weight:600; margin-bottom:28px; }
+
+/* ── REUNIFICATION ROLE ── */
+#reuniRoleScreen { background:var(–bg); }
+.role-options { padding:16px; display:flex; flex-direction:column; gap:12px; }
+.role-card { background:#fff; border:2px solid var(–border); border-radius:16px; padding:18px 20px; display:flex; align-items:center; gap:16px; cursor:pointer; transition:border-color .15s; }
+.role-card:active { background:var(–bg); }
+.role-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.role-title { font-size:17px; font-weight:700; }
+.role-desc { font-size:12px; color:var(–muted); margin-top:2px; }
+
+/* ── GREETER ── */
+#greeterScreen { background:var(–bg); }
+.search-box { background:#fff; padding:12px 16px; border-bottom:1px solid var(–border); }
+.search-input-wrap { background:var(–bg); border-radius:10px; display:flex; align-items:center; gap:8px; padding:8px 12px; }
+.search-input-wrap svg { width:16px; height:16px; flex-shrink:0; color:var(–muted); }
+.search-input { background:none; border:none; outline:none; font-size:16px; font-family:inherit; flex:1; color:var(–text); }
+.search-input::placeholder { color:#AEB0B5; }
+.search-results { flex:1; overflow-y:auto; }
+.search-item { background:#fff; padding:13px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(–border); cursor:pointer; }
+.search-item:active { background:var(–bg); }
+.s-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; }
+.s-name { font-size:16px; font-weight:500; }
+.s-grade { font-size:13px; color:var(–muted); }
+.search-empty { padding:40px 20px; text-align:center; color:var(–muted); font-size:15px; }
+
+/* ── STUDENT DETAIL (GREETER) ── */
+#studentDetailScreen { background:var(–bg); overflow-y:auto; }
+.stu-hero { background:#fff; padding:24px 20px 20px; display:flex; flex-direction:column; align-items:center; border-bottom:1px solid var(–border); }
+.stu-photo { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; color:#fff; margin-bottom:10px; }
+.stu-name { font-size:20px; font-weight:700; margin-bottom:3px; }
+.stu-info { font-size:13px; color:var(–muted); }
+.section-label { padding:14px 20px 8px; font-size:12px; font-weight:700; color:var(–muted); text-transform:uppercase; letter-spacing:.06em; }
+.guardian-card { background:#fff; margin:0; padding:14px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(–border); cursor:pointer; }
+.guardian-card:active { background:var(–bg); }
+.guardian-card.sel { background:#FFF3E0; border-left:3px solid var(–orange); }
+.g-avatar { width:38px; height:38px; border-radius:50%; background:#E5E5EA; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#555; flex-shrink:0; }
+.g-name { font-size:15px; font-weight:600; }
+.g-rel { font-size:12px; color:var(–muted); margin-top:2px; }
+.g-phone { font-size:12px; color:#007AFF; margin-top:2px; }
+.g-sel-indicator { margin-left:auto; width:22px; height:22px; border-radius:50%; border:2px solid #C7C7CC; display:flex; align-items:center; justify-content:center; }
+.g-sel-indicator.on { background:var(–orange); border-color:var(–orange); }
+.g-sel-indicator.on::after { content:’’; display:block; width:8px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg) translateY(-1px); }
+
+/* ── POPUP / MODAL ── */
+.modal-overlay { display:none; position:absolute; inset:0; background:rgba(0,0,0,.5); z-index:80; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal-sheet { background:#fff; border-radius:20px 20px 0 0; padding:24px 24px 36px; width:100%; }
+.modal-title { font-size:18px; font-weight:700; margin-bottom:6px; text-align:center; }
+.modal-sub { font-size:14px; color:var(–muted); text-align:center; margin-bottom:22px; line-height:1.5; }
+.modal-id-badge { background:var(–bg); border-radius:12px; padding:14px 16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+.modal-id-badge svg { width:28px; height:28px; flex-shrink:0; }
+.modal-id-name { font-size:15px; font-weight:700; }
+.modal-id-sub { font-size:12px; color:var(–muted); }
+.modal-btns { display:flex; gap:10px; }
+.modal-btn { flex:1; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; }
+.modal-btn.verified { background:var(–green); color:#fff; }
+.modal-btn.unverified { background:#F3F4F6; color:#374151; }
+
+/* ── RUNNER ── */
+#runnerScreen { background:var(–bg); }
+.runner-scroll { flex:1; overflow-y:auto; }
+.runner-header { background:#fff; padding:18px 20px; border-bottom:1px solid var(–border); }
+.runner-title { font-size:18px; font-weight:700; margin-bottom:4px; }
+.runner-sub { font-size:13px; color:var(–muted); }
+.queue-card { background:#fff; margin:12px 16px 0; border-radius:14px; padding:16px; border:1.5px solid var(–border); display:flex; align-items:center; gap:12px; }
+.queue-num { width:32px; height:32px; border-radius:50%; background:var(–orange); color:#fff; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.queue-name { font-size:15px; font-weight:600; }
+.queue-grade { font-size:12px; color:var(–muted); }
+.runner-bottom { padding:16px; flex-shrink:0; }
+.retrieve-btn { width:100%; background:var(–green); color:#fff; border:none; border-radius:14px; padding:16px; font-size:17px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; }
+
+/* ── REUNIFY STUDENT ── */
+#reunifyScreen { background:var(–bg); overflow-y:auto; }
+.reuni-hero { background:#fff; padding:20px; border-bottom:1px solid var(–border); display:flex; align-items:center; gap:14px; }
+.reuni-photo { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:#fff; flex-shrink:0; }
+.reuni-stu-name { font-size:17px; font-weight:700; }
+.reuni-stu-info { font-size:13px; color:var(–muted); margin-top:2px; }
+.reuni-guardian-block { background:#fff; margin:12px 16px 0; border-radius:14px; padding:16px; border:1.5px solid var(–border); }
+.rgb-label { font-size:11px; font-weight:700; color:var(–muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+.rgb-name { font-size:16px; font-weight:700; margin-bottom:3px; }
+.rgb-rel { font-size:13px; color:var(–muted); margin-bottom:3px; }
+.rgb-phone { font-size:13px; color:#007AFF; }
+.reuni-action-row { display:flex; gap:10px; margin:14px 16px 0; }
+.reuni-action-btn { flex:1; border:none; border-radius:12px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+.reuni-action-btn.primary { background:var(–orange); color:#fff; }
+.reuni-action-btn.secondary { background:#F3F4F6; color:var(–text); }
+
+/* ── SIGNATURE ── */
+#signatureScreen { background:var(–bg); }
+.sig-scroll { flex:1; overflow-y:auto; }
+.sig-header { background:#fff; padding:16px 20px; border-bottom:1px solid var(–border); }
+.sig-title { font-size:18px; font-weight:700; margin-bottom:3px; }
+.sig-sub { font-size:13px; color:var(–muted); }
+.sig-summary { background:#fff; margin:12px 16px 0; border-radius:14px; padding:16px; border:1.5px solid var(–border); }
+.sig-row { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+.sig-row:last-child { margin-bottom:0; }
+.sig-row-icon { font-size:20px; width:28px; text-align:center; }
+.sig-row-label { font-size:12px; color:var(–muted); }
+.sig-row-val { font-size:15px; font-weight:600; }
+.sig-canvas-wrap { background:#fff; margin:12px 16px 0; border-radius:14px; border:1.5px solid var(–border); overflow:hidden; }
+.sig-canvas-label { padding:12px 16px 6px; font-size:12px; font-weight:700; color:var(–muted); text-transform:uppercase; letter-spacing:.06em; }
+canvas#sigCanvas { width:100%; height:140px; cursor:crosshair; display:block; }
+.sig-clear { background:none; border:none; color:#007AFF; font-size:14px; padding:8px 16px; cursor:pointer; font-family:inherit; }
+.sig-bottom { padding:12px 16px 28px; flex-shrink:0; }
+
+/* ── COMPLETE ── */
+#completeScreen { background:#fff; align-items:center; justify-content:center; text-align:center; padding:36px 28px; }
+.complete-icon { width:76px; height:76px; background:var(–green); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:36px; color:#fff; animation:pop .4s cubic-bezier(.175,.885,.32,1.275); }
+.complete-title { font-size:20px; font-weight:700; margin-bottom:12px; }
+.msg-bubble { background:#DCF8C6; border-radius:16px 16px 4px 16px; padding:16px 18px; text-align:left; margin-bottom:10px; font-size:14px; line-height:1.6; }
+.msg-time { font-size:11px; color:var(–muted); text-align:right; }
+.msg-meta { font-size:12px; color:var(–muted); margin-bottom:24px; }
+
+/* scrollable containers */
+.scrollable { flex:1; overflow-y:auto; }
+</style>
+
+</head>
+<body>
+<div class="phone" id="phone">
+
+<!-- Status Bar -->
+
+<div class="status-bar">
+  <span id="clock">11:45</span>
+  <div class="si">
+    <svg width="18" height="13" viewBox="0 0 18 13"><rect x="0" y="4" width="3" height="9" rx="1" fill="#1C1C1E"/><rect x="5" y="3" width="3" height="10" rx="1" fill="#1C1C1E"/><rect x="10" y="1" width="3" height="12" rx="1" fill="#1C1C1E"/><rect x="15" y="0" width="3" height="13" rx="1" fill="#1C1C1E" opacity=".25"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 9.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" fill="#1C1C1E"/><path d="M3.5 6.5C4.9 5.2 6.4 4.5 8 4.5s3.1.7 4.5 2" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M1 4C3 2.2 5.4 1 8 1s5 1.2 7 3" stroke="#1C1C1E" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    <svg width="26" height="13" viewBox="0 0 26 13"><rect x=".5" y=".5" width="22" height="12" rx="3.5" stroke="#1C1C1E" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="16" height="10" rx="2" fill="#1C1C1E"/><path d="M24 4.5v4c1-.4 1.5-1 1.5-2s-.5-1.6-1.5-2z" fill="#1C1C1E" opacity=".4"/></svg>
+  </div>
+</div>
+
+<!-- Slide-out Menu -->
+
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+<div class="side-menu" id="sideMenu">
+  <button class="menu-close" onclick="closeMenu()">✕</button>
+  <div class="menu-header">
+    <div class="menu-school" id="menuSchool">Smith High School</div>
+    <div class="menu-user" id="menuUser">Demo User</div>
+  </div>
+  <div class="menu-item" onclick="closeMenu();goTo('activeScreen')">
+    <div class="menu-icon" style="background:#FEF3C7">🏠</div>
+    <div><div style="font-weight:600">Incident Home</div><div style="font-size:12px;color:var(--muted)">Active lockdown</div></div>
+  </div>
+  <div class="menu-item" onclick="closeMenu();openRoster()">
+    <div class="menu-icon" style="background:#D1FAE5">👥</div>
+    <div><div style="font-weight:600">Accountability</div><div style="font-size:12px;color:var(--muted)">Mark roster</div></div>
+  </div>
+  <div class="menu-item" onclick="closeMenu();startReunification('greeter')">
+    <div class="menu-icon" style="background:#DBEAFE">🏷️</div>
+    <div><div style="font-weight:600">Greeter</div><div style="font-size:12px;color:var(--muted)">Check in guardians</div></div>
+  </div>
+  <div class="menu-item" onclick="closeMenu();startReunification('runner')">
+    <div class="menu-icon" style="background:#EDE9FE">🏃</div>
+    <div><div style="font-weight:600">Runner</div><div style="font-size:12px;color:var(--muted)">Retrieve students</div></div>
+  </div>
+  <div class="menu-item" onclick="closeMenu();startReunification('reunifier')">
+    <div class="menu-icon" style="background:#FCE7F3">🤝</div>
+    <div><div style="font-weight:600">Reunifier</div><div style="font-size:12px;color:var(--muted)">Complete reunification</div></div>
+  </div>
+</div>
+
+<!-- ID Verify Modal -->
+
+<div class="modal-overlay" id="idModal">
+  <div class="modal-sheet">
+    <div class="modal-title">Verify ID</div>
+    <div class="modal-sub">Please check a valid photo ID for the guardian before releasing the student.</div>
+    <div class="modal-id-badge">
+      <svg viewBox="0 0 28 28" fill="none"><rect x="2" y="5" width="24" height="18" rx="3" stroke="#6B7280" stroke-width="2" fill="none"/><rect x="5" y="9" width="8" height="8" rx="4" fill="#D1D5DB"/><line x1="16" y1="11" x2="23" y2="11" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="15" x2="21" y2="15" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/></svg>
+      <div>
+        <div class="modal-id-name" id="modalGuardianName">Guardian Name</div>
+        <div class="modal-id-sub" id="modalGuardianRel">Relationship</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn unverified" onclick="idResult(false)">Unable to Verify</button>
+      <button class="modal-btn verified" onclick="idResult(true)">✓ Verified</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREENS ══ -->
+
+<!-- SETUP -->
+
+<div class="screen active" id="setupScreen">
+  <div class="logo">R</div>
+  <div class="setup-title">Raptor Alert Demo</div>
+  <div class="setup-sub">Enter your info to walk through a complete emergency workflow.</div>
+  <div class="sf"><label>Your Name</label><input type="text" id="sName" placeholder="e.g. Ms. Rivera"/></div>
+  <div class="sf"><label>Mobile Number</label><input type="tel" id="sPhone" placeholder="+1 (555) 000-0000"/></div>
+  <div class="sf"><label>School</label><input type="text" id="sSchool" placeholder="e.g. Lincoln High School"/></div>
+  <button class="btn-primary" onclick="startDemo()">Begin Demo →</button>
+</div>
+
+<!-- HOME -->
+
+<div class="screen" id="homeScreen">
+  <div class="nav">
+    <span style="font-size:22px;cursor:pointer;color:var(--muted)" onclick="openMenu()">☰</span>
+    <div class="nav-title" id="hSchool">Smith High School</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="srp-scroll">
+    <div class="srp-grid">
+      <div class="srp-btn" onclick="pickAlert('LOCKOUT EMERGENCY','lockout')">
+        <div class="srp-circle" style="background:var(--lockout)">
+          <svg viewBox="0 0 80 80" fill="none"><rect x="22" y="10" width="32" height="56" rx="4" stroke="white" stroke-width="4" fill="none"/><line x1="22" y1="10" x2="54" y2="66" stroke="white" stroke-width="4.5" stroke-linecap="round"/><circle cx="48" cy="40" r="4" fill="white"/><rect x="29" y="20" width="4" height="18" rx="2" fill="white"/><rect x="29" y="42" width="4" height="6" rx="2" fill="white"/></svg>
+        </div>
+        <div class="srp-lbl">Lockout</div>
+      </div>
+      <div class="srp-btn" onclick="pickAlert('LOCKDOWN EMERGENCY','lockdown')">
+        <div class="srp-circle" style="background:var(--lockdown)">
+          <svg viewBox="0 0 80 80" fill="none"><path d="M28 38V30C28 21 52 21 52 30V38" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="18" y="37" width="44" height="30" rx="5" fill="white"/><circle cx="40" cy="52" r="5" fill="#DC2626"/><rect x="38" y="52" width="4" height="7" rx="2" fill="#DC2626"/></svg>
+        </div>
+        <div class="srp-lbl">Lockdown</div>
+      </div>
+      <div class="srp-btn" onclick="pickAlert('EVACUATE EMERGENCY','evacuate')">
+        <div class="srp-circle" style="background:var(--evacuate)">
+          <svg viewBox="0 0 80 80" fill="none"><circle cx="22" cy="17" r="6" fill="white"/><circle cx="40" cy="13" r="6" fill="white"/><circle cx="58" cy="17" r="6" fill="white"/><line x1="22" y1="23" x2="22" y2="46" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="40" y1="19" x2="40" y2="46" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="58" y1="23" x2="58" y2="46" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="16" y1="36" x2="28" y2="36" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="34" y1="34" x2="46" y2="34" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="52" y1="36" x2="64" y2="36" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="17" y1="46" x2="22" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="27" y1="46" x2="22" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="35" y1="46" x2="40" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="45" y1="46" x2="40" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="53" y1="46" x2="58" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="63" y1="46" x2="58" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="srp-lbl">Evacuate</div>
+      </div>
+      <div class="srp-btn" onclick="pickAlert('SHELTER EMERGENCY','shelter')">
+        <div class="srp-circle" style="background:var(--shelter)">
+          <svg viewBox="0 0 80 80" fill="none"><path d="M12 40L40 16L68 40" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="22" y="39" width="36" height="24" rx="2" fill="none" stroke="white" stroke-width="4"/><circle cx="40" cy="30" r="6" fill="white"/><line x1="40" y1="36" x2="40" y2="55" stroke="white" stroke-width="4" stroke-linecap="round"/><line x1="32" y1="44" x2="48" y2="44" stroke="white" stroke-width="4" stroke-linecap="round"/><line x1="34" y1="55" x2="40" y2="63" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="46" y1="55" x2="40" y2="63" stroke="white" stroke-width="3.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="srp-lbl">Shelter</div>
+      </div>
+      <div class="hold-row">
+        <div class="srp-btn" onclick="pickAlert('HOLD EMERGENCY','hold')">
+          <div class="srp-circle" style="background:var(--hold)">
+            <svg viewBox="0 0 80 80" fill="none"><rect x="22" y="10" width="32" height="56" rx="4" stroke="white" stroke-width="4" fill="none"/><line x1="22" y1="10" x2="54" y2="66" stroke="white" stroke-width="4.5" stroke-linecap="round"/><circle cx="48" cy="40" r="4" fill="white"/><rect x="29" y="20" width="4" height="18" rx="2" fill="white"/><rect x="29" y="42" width="4" height="6" rx="2" fill="white"/></svg>
+          </div>
+          <div class="srp-lbl">Hold</div>
+        </div>
+      </div>
+    </div>
+    <div class="team-assist">🔔 TEAM ASSIST</div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab-item active"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" fill="currentColor"/></svg>Home</div>
+    <div class="tab-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Incidents</div>
+    <div class="tab-item"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><line x1="8" y1="8" x2="16" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Documents</div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+
+<div class="screen" id="confirmScreen">
+  <div class="conf-nav" id="confSchool">Smith High School</div>
+  <div class="conf-body">
+    <div class="conf-icon" id="confIcon" style="background:#DC2626">
+      <svg viewBox="0 0 80 80" fill="none"><path d="M28 38V30C28 21 52 21 52 30V38" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="18" y="37" width="44" height="30" rx="5" fill="white"/><circle cx="40" cy="52" r="5" fill="#DC2626"/><rect x="38" y="52" width="4" height="7" rx="2" fill="#DC2626"/></svg>
+    </div>
+    <div class="conf-title" id="confTitle">LOCKDOWN EMERGENCY</div>
+    <button class="subtype-pill">+ Add Subtype</button>
+    <div class="slide-wrap" id="slideWrap">
+      <div class="slide-label" id="slideLabel">Initiate Emergency</div>
+      <div class="slide-handle" id="slideHandle">
+        <svg viewBox="0 0 26 26" fill="none"><path d="M5 13h16M13 6l7 7-7 7" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <button class="cancel-circle" onclick="goTo('homeScreen')">✕</button>
+    <div class="cancel-lbl">Cancel</div>
+  </div>
+</div>
+
+<!-- ACTIVE INCIDENT -->
+
+<div class="screen" id="activeScreen">
+  <div class="nav">
+    <span style="font-size:22px;cursor:pointer;color:var(--muted)" onclick="openMenu()">☰</span>
+    <div class="nav-title" id="incTitleNav">Lockdown</div>
+    <div style="width:28px"></div>
+  </div>
+  <div class="inc-scroll">
+    <div class="inc-header">
+      <div class="inc-icon" id="incIcon" style="background:#DC2626">
+        <svg viewBox="0 0 80 80" fill="none"><path d="M28 38V30C28 21 52 21 52 30V38" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="18" y="37" width="44" height="30" rx="5" fill="white"/><circle cx="40" cy="52" r="5" fill="#DC2626"/><rect x="38" y="52" width="4" height="7" rx="2" fill="#DC2626"/></svg>
+      </div>
+      <div class="inc-title" id="incTitle">LOCKDOWN EMERGENCY</div>
+      <div class="inc-school" id="incSchool">Smith High School</div>
+      <div class="inc-meta" id="incMeta"></div>
+      <div class="inc-map">🗺 View Initiation Location</div>
+    </div>
+    <div class="qt-label">QUICK TASKS</div>
+    <div class="qt-grid">
+      <div class="qt-btn"><svg viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1H7c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" fill="currentColor"/></svg>Call 911</div>
+      <div class="qt-btn"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="10" r="1.2" fill="currentColor"/></svg>Text 911</div>
+    </div>
+    <div class="full-btn"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>Group Messaging</div>
+    <div class="full-btn" onclick="openRoster()"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>My Profile &amp; Roster</div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab-item active"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" fill="currentColor"/></svg>Home</div>
+    <div class="tab-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>Incidents</div>
+    <div class="tab-item"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>Documents</div>
+  </div>
+</div>
+
+<!-- ROSTER -->
+
+<div class="screen" id="rosterScreen">
+  <div class="nav"><div class="back" onclick="goTo('activeScreen')">‹ Back</div><div class="nav-title">My Roster</div><div class="nav-r"></div></div>
+  <div class="roster-top">
+    <div><div class="ri-class">Period 3 · Room 204</div><div class="ri-name" id="riName">Ms. Rivera</div></div>
+    <div class="ri-count"><b id="accCt">0</b> / 18 accounted</div>
+  </div>
+  <div class="sel-row">
+    <button class="sel-all-btn" onclick="toggleAll()">Select All</button>
+    <span class="sel-ct" id="selCt">0 selected</span>
+  </div>
+  <div class="r-scroll" id="rosterList"></div>
+  <div class="update-bar">
+    <button class="btn-primary" id="updBtn" disabled onclick="openStatusPicker()">Update Status</button>
+  </div>
+</div>
+
+<!-- STATUS PICKER -->
+
+<div class="screen" id="statusPickScreen">
+  <div class="nav"><div class="back" onclick="goTo('rosterScreen')">‹ Back</div><div class="nav-title">Update Status</div><div class="nav-r"></div></div>
+  <div class="scrollable">
+    <div style="padding:12px 16px 6px;font-size:13px;color:var(--muted)" id="statusPickSub">Select a status for 0 students</div>
+    <div class="status-options">
+      <div class="status-opt" id="sopt-acc" onclick="selectStatus('acc')">
+        <div class="so-dot" style="background:var(--green)"></div>
+        <div><div class="so-label">Accounted For</div><div class="so-desc">Student is present and confirmed safe</div></div>
+      </div>
+      <div class="status-opt" id="sopt-abs" onclick="selectStatus('abs')">
+        <div class="so-dot" style="background:#9CA3AF"></div>
+        <div><div class="so-label">Absent</div><div class="so-desc">Student was not in school today</div></div>
+      </div>
+      <div class="status-opt" id="sopt-mis" onclick="selectStatus('mis')">
+        <div class="so-dot" style="background:var(--red)"></div>
+        <div><div class="so-label">Missing</div><div class="so-desc">Student cannot be located — urgent</div></div>
+      </div>
+      <div class="status-opt" id="sopt-inj" onclick="selectStatus('inj')">
+        <div class="so-dot" style="background:var(--orange)"></div>
+        <div><div class="so-label">Injured</div><div class="so-desc">Student needs medical attention</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="update-bar">
+    <button class="btn-primary" id="statusNextBtn" disabled onclick="goToLocation()">Next: Update Location →</button>
+  </div>
+</div>
+
+<!-- LOCATION -->
+
+<div class="screen" id="locationScreen">
+  <div class="nav"><div class="back" onclick="goTo('statusPickScreen')">‹ Back</div><div class="nav-title">Update Location</div><div class="nav-r"></div></div>
+  <div class="scrollable">
+    <div class="loc-hdr"><div class="loc-title">Where are you?</div><div class="loc-sub" id="locSub">Confirm current location</div></div>
+    <div id="locationList"></div>
+  </div>
+  <div class="update-bar">
+    <button class="btn-primary" id="locBtn" disabled onclick="confirmStatus()">Confirm &amp; Save</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+
+<div class="screen" id="successScreen">
+  <div class="suc-check" id="sucCheck" style="background:var(--green)">✓</div>
+  <div class="suc-title" id="sucTitle">Status Updated</div>
+  <div class="suc-sub" id="sucSub">Students marked as accounted for.</div>
+  <div class="suc-loc" id="sucLoc">📍 Room 204</div>
+  <button class="btn-primary" onclick="goTo('activeScreen')">Back to Incident</button>
+</div>
+
+<!-- REUNIFICATION ROLE (not needed, go direct from menu) -->
+
+<!-- GREETER -->
+
+<div class="screen" id="greeterScreen">
+  <div class="nav"><div class="back" onclick="goTo('activeScreen')">‹ Back</div><div class="nav-title">Greeter</div><div class="nav-r"></div></div>
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input class="search-input" id="greeterSearch" placeholder="Search student name…" oninput="filterStudents(this.value)"/>
+    </div>
+  </div>
+  <div class="search-results" id="greeterResults">
+    <div class="search-empty">Start typing to find a student</div>
+  </div>
+</div>
+
+<!-- STUDENT DETAIL -->
+
+<div class="screen" id="studentDetailScreen">
+  <div class="nav"><div class="back" onclick="goTo('greeterScreen')">‹ Back</div><div class="nav-title">Student Detail</div><div class="nav-r"></div></div>
+  <div class="scrollable">
+    <div class="stu-hero">
+      <div class="stu-photo" id="stuPhoto" style="background:#2563EB">AA</div>
+      <div class="stu-name" id="stuName">Aaliyah Johnson</div>
+      <div class="stu-info" id="stuInfo">Grade 10 · Room 204</div>
+    </div>
+    <div class="section-label">Authorized Guardians — Select Pickup</div>
+    <div id="guardianList"></div>
+  </div>
+  <div class="update-bar">
+    <button class="btn-primary" id="greeterNextBtn" disabled onclick="showIdModal('greeter')">Verify Guardian ID →</button>
+  </div>
+</div>
+
+<!-- RUNNER -->
+
+<div class="screen" id="runnerScreen">
+  <div class="nav"><div class="back" onclick="goTo('activeScreen')">‹ Back</div><div class="nav-title">Runner</div><div class="nav-r"></div></div>
+  <div class="runner-scroll">
+    <div class="runner-header">
+      <div class="runner-title">Student Queue</div>
+      <div class="runner-sub" id="runnerSub">Waiting for greeter to check in students…</div>
+    </div>
+    <div id="runnerQueue"></div>
+  </div>
+  <div class="runner-bottom">
+    <button class="retrieve-btn" id="retrieveBtn" onclick="retrieveStudent()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10M5 8l5-5 5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="17" x2="17" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      Retrieve Next Student
+    </button>
+  </div>
+</div>
+
+<!-- REUNIFY -->
+
+<div class="screen" id="reunifyScreen">
+  <div class="nav"><div class="back" onclick="goTo('runnerScreen')">‹ Back</div><div class="nav-title">Reunify Student</div><div class="nav-r"></div></div>
+  <div class="scrollable">
+    <div class="reuni-hero">
+      <div class="reuni-photo" id="reuniPhoto" style="background:#2563EB">AJ</div>
+      <div><div class="reuni-stu-name" id="reuniStuName">Aaliyah Johnson</div><div class="reuni-stu-info" id="reuniStuInfo">Grade 10 · Room 204</div></div>
+    </div>
+    <div class="section-label">Guardian Picking Up</div>
+    <div class="reuni-guardian-block">
+      <div class="rgb-label">Authorized Guardian</div>
+      <div class="rgb-name" id="reuniGName">—</div>
+      <div class="rgb-rel" id="reuniGRel">—</div>
+      <div class="rgb-phone" id="reuniGPhone">—</div>
+    </div>
+    <div class="reuni-action-row">
+      <button class="reuni-action-btn secondary" onclick="goTo('runnerScreen')">Handoff to Reunifier</button>
+      <button class="reuni-action-btn primary" onclick="showIdModal('reunify')">Reunify →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNATURE -->
+
+<div class="screen" id="signatureScreen">
+  <div class="nav"><div class="back" onclick="goTo('reunifyScreen')">‹ Back</div><div class="nav-title">Guardian Signature</div><div class="nav-r"></div></div>
+  <div class="sig-scroll">
+    <div class="sig-header">
+      <div class="sig-title">Complete Reunification</div>
+      <div class="sig-sub">Guardian must sign to confirm student release.</div>
+    </div>
+    <div class="sig-summary">
+      <div class="sig-row"><div class="sig-row-icon">🧒</div><div><div class="sig-row-label">Student</div><div class="sig-row-val" id="sigStuName">—</div></div></div>
+      <div class="sig-row"><div class="sig-row-icon">👤</div><div><div class="sig-row-label">Released to</div><div class="sig-row-val" id="sigGName">—</div></div></div>
+      <div class="sig-row"><div class="sig-row-icon">🕐</div><div><div class="sig-row-label">Time</div><div class="sig-row-val" id="sigTime">—</div></div></div>
+    </div>
+    <div class="sig-canvas-wrap">
+      <div class="sig-canvas-label">Guardian Signature</div>
+      <canvas id="sigCanvas" width="358" height="140"></canvas>
+      <button class="sig-clear" onclick="clearSig()">Clear</button>
+    </div>
+  </div>
+  <div class="sig-bottom">
+    <button class="btn-primary" onclick="completeReunification()">Complete Reunification ✓</button>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+
+<div class="screen" id="completeScreen">
+  <div class="complete-icon">✓</div>
+  <div class="complete-title">Reunification Complete</div>
+  <div class="msg-bubble" id="completeMsgBubble">
+    <strong id="cMsgStu">Aaliyah Johnson</strong> was reunified with <strong id="cMsgG">M. Johnson</strong> based on the reunification procedures at <strong id="cMsgSchool">Smith High School</strong> on <span id="cMsgDate">—</span>.
+  </div>
+  <div class="msg-time" id="cMsgTime">11:45 AM</div>
+  <div class="msg-meta">Delivered · Raptor Alert</div>
+  <button class="btn-primary" style="margin-top:24px" onclick="goTo('activeScreen')">Back to Incident</button>
+</div>
+
+</div><!-- /phone -->
+
+<script>
+// ── State ──
+let userName='', userSchool='Smith High School';
+let alertKey='lockdown', alertType='LOCKDOWN EMERGENCY';
+let selected=new Set(), accounted={}, chosenStatus='', chosenLocation='';
+let selAll=false;
+let currentStudent=null, currentGuardian=null, greeterQueue=[];
+let idModalCallback=null;
+
+const COLORS={lockout:'#2563EB',lockdown:'#DC2626',evacuate:'#16A34A',shelter:'#EA580C',hold:'#7C3AED'};
+const SVGS={
+  lockdown:`<svg viewBox="0 0 80 80" fill="none"><path d="M28 38V30C28 21 52 21 52 30V38" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="18" y="37" width="44" height="30" rx="5" fill="white"/><circle cx="40" cy="52" r="5" fill="#DC2626"/><rect x="38" y="52" width="4" height="7" rx="2" fill="#DC2626"/></svg>`,
+  lockout:`<svg viewBox="0 0 80 80" fill="none"><rect x="22" y="10" width="32" height="56" rx="4" stroke="white" stroke-width="4" fill="none"/><line x1="22" y1="10" x2="54" y2="66" stroke="white" stroke-width="4.5" stroke-linecap="round"/><circle cx="48" cy="40" r="4" fill="white"/></svg>`,
+  evacuate:`<svg viewBox="0 0 80 80" fill="none"><circle cx="40" cy="13" r="6" fill="white"/><line x1="40" y1="19" x2="40" y2="46" stroke="white" stroke-width="4.5" stroke-linecap="round"/><line x1="34" y1="34" x2="46" y2="34" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="35" y1="46" x2="40" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="45" y1="46" x2="40" y2="62" stroke="white" stroke-width="3.5" stroke-linecap="round"/></svg>`,
+  shelter:`<svg viewBox="0 0 80 80" fill="none"><path d="M12 40L40 16L68 40" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="22" y="39" width="36" height="24" rx="2" fill="none" stroke="white" stroke-width="4"/><circle cx="40" cy="30" r="6" fill="white"/></svg>`,
+  hold:`<svg viewBox="0 0 80 80" fill="none"><rect x="22" y="10" width="32" height="56" rx="4" stroke="white" stroke-width="4" fill="none"/><line x1="22" y1="10" x2="54" y2="66" stroke="white" stroke-width="4.5" stroke-linecap="round"/><circle cx="48" cy="40" r="4" fill="white"/></svg>`
+};
+
+const STUDENTS=[
+  {name:'Aaliyah Johnson',grade:10,room:'Rm 204',color:'#2563EB'},
+  {name:'Brandon Kim',grade:9,room:'Rm 101',color:'#16A34A'},
+  {name:'Carmen Rivera',grade:11,room:'Rm 310',color:'#DC2626'},
+  {name:'David Chen',grade:10,room:'Rm 204',color:'#7C3AED'},
+  {name:'Eliana Patel',grade:12,room:'Rm 412',color:'#EA580C'},
+  {name:'Felix Okafor',grade:9,room:'Rm 101',color:'#0891B2'},
+  {name:'Grace Thompson',grade:11,room:'Rm 310',color:'#BE185D'},
+  {name:'Hassan Ali',grade:10,room:'Rm 204',color:'#065F46'},
+  {name:'Isabelle Martin',grade:12,room:'Rm 412',color:'#92400E'},
+  {name:'James Reyes',grade:9,room:'Rm 101',color:'#1D4ED8'},
+  {name:'Kenji Watanabe',grade:11,room:'Rm 310',color:'#6D28D9'},
+  {name:'Layla Ahmad',grade:10,room:'Rm 204',color:'#B45309'},
+  {name:'Marcus Brown',grade:12,room:'Rm 412',color:'#047857'},
+  {name:'Nadia Flores',grade:9,room:'Rm 101',color:'#9D174D'},
+  {name:'Omar Hassan',grade:11,room:'Rm 310',color:'#1E40AF'},
+  {name:'Priya Sharma',grade:10,room:'Rm 204',color:'#5B21B6'},
+  {name:'Quinn Torres',grade:12,room:'Rm 412',color:'#92400E'},
+  {name:'Rosa Mendez',grade:9,room:'Rm 101',color:'#065F46'},
+];
+
+const GUARDIANS={
+  'Aaliyah Johnson':[{name:'Maria Johnson',rel:'Mother',phone:'(555) 201-4432'},{name:'Darnell Johnson',rel:'Father',phone:'(555) 201-4433'}],
+  'Brandon Kim':[{name:'Jennifer Kim',rel:'Mother',phone:'(555) 302-1198'},{name:'Thomas Kim',rel:'Father',phone:'(555) 302-1199'}],
+  'Carmen Rivera':[{name:'Lucia Rivera',rel:'Mother',phone:'(555) 401-7821'}],
+  'David Chen':[{name:'Mei Chen',rel:'Mother',phone:'(555) 503-6612'},{name:'Wei Chen',rel:'Father',phone:'(555) 503-6613'}],
+  'Eliana Patel':[{name:'Priya Patel',rel:'Mother',phone:'(555) 604-2234'},{name:'Raj Patel',rel:'Father',phone:'(555) 604-2235'}],
+  'Felix Okafor':[{name:'Adaeze Okafor',rel:'Mother',phone:'(555) 705-8876'}],
+  'Grace Thompson':[{name:'Patricia Thompson',rel:'Mother',phone:'(555) 806-3341'},{name:'Marcus Thompson',rel:'Father',phone:'(555) 806-3342'}],
+  'Hassan Ali':[{name:'Fatima Ali',rel:'Mother',phone:'(555) 907-5519'}],
+  'Isabelle Martin':[{name:'Claire Martin',rel:'Mother',phone:'(555) 108-6623'},{name:'Jean Martin',rel:'Father',phone:'(555) 108-6624'}],
+  'James Reyes':[{name:'Sofia Reyes',rel:'Mother',phone:'(555) 209-4412'}],
+};
+function getGuardians(name){ return GUARDIANS[name]||[{name:'Parent/Guardian',rel:'Guardian',phone:'(555) 000-0000'}]; }
+
+const LOCATIONS=[
+  {n:'Room 101',t:'Classroom'},{n:'Room 102',t:'Classroom'},
+  {n:'Room 204',t:'Classroom'},{n:'Room 205',t:'Classroom'},
+  {n:'Room 310',t:'Classroom'},{n:'Gymnasium',t:'Common Area'},
+  {n:'Library',t:'Common Area'},{n:'Cafeteria',t:'Common Area'},
+  {n:'Main Office',t:'Administration'},{n:'Front Entrance',t:'Exterior'},
+  {n:'Parking Lot A',t:'Exterior'},
+];
+
+// ── Clock ──
+(function tick(){ const d=new Date(),h=d.getHours()%12||12,m=d.getMinutes().toString().padStart(2,'0'); document.getElementById('clock').textContent=h+':'+m; setTimeout(tick,15000); })();
+
+function goTo(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+// ── Menu ──
+function openMenu(){ document.getElementById('sideMenu').classList.add('open'); document.getElementById('menuOverlay').classList.add('open'); }
+function closeMenu(){ document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
+
+// ── Setup ──
+function startDemo(){
+  userName=document.getElementById('sName').value||'Demo User';
+  userSchool=document.getElementById('sSchool').value||'Smith High School';
+  document.getElementById('hSchool').textContent=userSchool;
+  document.getElementById('confSchool').textContent=userSchool;
+  document.getElementById('incSchool').textContent=userSchool;
+  document.getElementById('menuSchool').textContent=userSchool;
+  document.getElementById('menuUser').textContent=userName;
+  document.getElementById('riName').textContent=userName;
+  const d=new Date();
+  document.getElementById('incMeta').textContent=`${userName} · ${d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})} · ${document.getElementById('clock').textContent}`;
+  buildRoster();
+  goTo('homeScreen');
+}
+
+// ── Alert Pick ──
+function pickAlert(type,key){
+  alertType=type; alertKey=key;
+  const c=COLORS[key],s=SVGS[key]||SVGS.lockdown;
+  document.getElementById('confIcon').style.background=c;
+  document.getElementById('confIcon').innerHTML=s;
+  document.getElementById('confTitle').textContent=type;
+  document.getElementById('incIcon').style.background=c;
+  document.getElementById('incIcon').innerHTML=s;
+  document.getElementById('incTitle').textContent=type;
+  document.getElementById('incTitleNav').textContent=type.split(' ')[0];
+  initSlide(c);
+  goTo('confirmScreen');
+}
+
+function initSlide(color){
+  const wrap=document.getElementById('slideWrap'),handle=document.getElementById('slideHandle'),label=document.getElementById('slideLabel');
+  handle.style.transition='none'; handle.style.left='3px'; label.textContent='Initiate Emergency';
+  let drag=false,sx=0,cl=3;
+  const newH=handle.cloneNode(true); handle.parentNode.replaceChild(newH,handle);
+  newH.addEventListener('mousedown',e=>{ drag=true; sx=(e.touches?e.touches[0].clientX:e.clientX)-cl; newH.style.transition='none'; });
+  newH.addEventListener('touchstart',e=>{ drag=true; sx=e.touches[0].clientX-cl; newH.style.transition='none'; },{passive:true});
+  document.addEventListener('mousemove',e=>{ if(!drag)return; const max=wrap.offsetWidth-60; cl=Math.max(3,Math.min(e.clientX-sx,max)); newH.style.left=cl+'px'; label.textContent=cl>max*.3?'Slide to Initiate →':'Initiate Emergency'; if(cl>=max-8){drag=false;goTo('activeScreen');} });
+  document.addEventListener('touchmove',e=>{ if(!drag)return; const max=wrap.offsetWidth-60; cl=Math.max(3,Math.min(e.touches[0].clientX-sx,max)); newH.style.left=cl+'px'; label.textContent=cl>max*.3?'Slide to Initiate →':'Initiate Emergency'; if(cl>=max-8){drag=false;goTo('activeScreen');} },{passive:true});
+  const onUp=()=>{ if(!drag)return; drag=false; newH.style.transition='left .3s'; newH.style.left='3px'; cl=3; label.textContent='Initiate Emergency'; };
+  document.addEventListener('mouseup',onUp); document.addEventListener('touchend',onUp);
+}
+
+// ── Roster ──
+function buildRoster(){
+  selected.clear(); updateSelCount();
+  const list=document.getElementById('rosterList'); list.innerHTML='';
+  STUDENTS.forEach((s,i)=>{
+    const st=accounted[i]; const initials=s.name.split(' ').map(n=>n[0]).join('');
+    const badges={acc:'Accounted',abs:'Absent',mis:'Missing',inj:'Injured'};
+    const bclass=st?st:'unk';
+    const div=document.createElement('div');
+    div.className='r-item'+(st?' is-acc':'');
+    div.id='ri'+i;
+    div.innerHTML=`<div class="r-check${selected.has(i)?' on':''}" id="rc${i}"></div><div class="r-avatar" style="background:${s.color};color:#fff">${initials}</div><div class="r-name">${s.name}</div><div class="r-badge ${bclass}">${st?badges[st]:'Unknown'}</div>`;
+    if(!st) div.addEventListener('click',()=>toggleStu(i));
+    list.appendChild(div);
+  });
+  document.getElementById('accCt').textContent=Object.keys(accounted).length;
+}
+
+function openRoster(){ buildRoster(); goTo('rosterScreen'); }
+
+function toggleStu(i){
+  if(accounted[i])return;
+  if(selected.has(i)){selected.delete(i);document.getElementById('rc'+i).classList.remove('on');}
+  else{selected.add(i);document.getElementById('rc'+i).classList.add('on');}
+  updateSelCount();
+}
+
+function toggleAll(){
+  selAll=!selAll;
+  STUDENTS.forEach((_,i)=>{ if(accounted[i])return; const cb=document.getElementById('rc'+i); if(selAll){selected.add(i);cb.classList.add('on');}else{selected.delete(i);cb.classList.remove('on');} });
+  updateSelCount();
+}
+
+function updateSelCount(){
+  const n=selected.size;
+  document.getElementById('selCt').textContent=n+' selected';
+  document.getElementById('updBtn').disabled=n===0;
+}
+
+// ── Status Pick ──
+let pickedStatus='';
+
+function openStatusPicker(){
+  // Called from "Update Status" button on roster
+  pickedStatus='';
+  document.querySelectorAll('.status-opt').forEach(o=>o.classList.remove('sel'));
+  document.getElementById('statusNextBtn').disabled=true;
+  document.getElementById('statusPickSub').textContent=`Select a status for ${selected.size} student${selected.size!==1?'s':''}`;
+  goTo('statusPickScreen');
+}
+
+function selectStatus(st){
+  pickedStatus=st;
+  document.querySelectorAll('.status-opt').forEach(o=>o.classList.remove('sel'));
+  document.getElementById('sopt-'+st).classList.add('sel');
+  document.getElementById('statusNextBtn').disabled=false;
+}
+
+function goToLocation(){
+  // Called from "Next: Update Location" on status picker — go to location screen
+  if(!pickedStatus) return;
+  chosenLocation='';
+  buildLocationList();
+  document.getElementById('locSub').textContent=`Updating ${selected.size} student(s) — pick your current location`;
+  document.getElementById('locBtn').disabled=true;
+  goTo('locationScreen');
+}
+
+function buildLocationList(){
+  const list=document.getElementById('locationList'); list.innerHTML='';
+  LOCATIONS.forEach((loc,i)=>{
+    const div=document.createElement('div'); div.className='loc-item';
+    div.innerHTML=`<div><div class="loc-name">${loc.n}</div><div class="loc-type">${loc.t}</div></div><div class="loc-radio" id="lr${i}"></div>`;
+    div.addEventListener('click',()=>selectLoc(i,loc.n));
+    list.appendChild(div);
+  });
+}
+
+function selectLoc(i,name){
+  document.querySelectorAll('.loc-radio').forEach(r=>r.classList.remove('sel'));
+  document.getElementById('lr'+i).classList.add('sel');
+  chosenLocation=name;
+  document.getElementById('locBtn').disabled=false;
+}
+
+function confirmStatus(){
+  if(!pickedStatus||!chosenLocation)return;
+  selected.forEach(i=>{ accounted[i]=pickedStatus; });
+  const n=selected.size, labels={acc:'Accounted For',abs:'Absent',mis:'Missing',inj:'Injured'};
+  const colors={acc:COLORS.evacuate,abs:'#9CA3AF',mis:COLORS.lockdown,inj:COLORS.shelter};
+  document.getElementById('sucCheck').style.background=colors[pickedStatus]||COLORS.evacuate;
+  document.getElementById('sucTitle').textContent='Status Updated';
+  document.getElementById('sucSub').textContent=`${n} student${n!==1?'s':''} marked as "${labels[pickedStatus]}".`;
+  document.getElementById('sucLoc').textContent='📍 '+chosenLocation;
+  selected.clear();
+  goTo('successScreen');
+}
+
+// ── REUNIFICATION ──
+function startReunification(role){
+  if(role==='greeter'){ document.getElementById('greeterSearch').value=''; document.getElementById('greeterResults').innerHTML='<div class="search-empty">Start typing to find a student</div>'; goTo('greeterScreen'); }
+  else if(role==='runner'){ buildRunnerQueue(); goTo('runnerScreen'); }
+  else { goTo('runnerScreen'); }
+}
+
+// GREETER
+function filterStudents(q){
+  const res=document.getElementById('greeterResults');
+  if(!q.trim()){ res.innerHTML='<div class="search-empty">Start typing to find a student</div>'; return; }
+  const matches=STUDENTS.filter(s=>s.name.toLowerCase().includes(q.toLowerCase()));
+  if(!matches.length){ res.innerHTML='<div class="search-empty">No students found</div>'; return; }
+  res.innerHTML='';
+  matches.forEach(s=>{
+    const initials=s.name.split(' ').map(n=>n[0]).join('');
+    const div=document.createElement('div'); div.className='search-item';
+    div.innerHTML=`<div class="s-avatar" style="background:${s.color}">${initials}</div><div><div class="s-name">${s.name}</div><div class="s-grade">Grade ${s.grade} · ${s.room}</div></div>`;
+    div.addEventListener('click',()=>openStudentDetail(s));
+    res.appendChild(div);
+  });
+}
+
+function openStudentDetail(s){
+  currentStudent=s;
+  currentGuardian=null;
+  const initials=s.name.split(' ').map(n=>n[0]).join('');
+  document.getElementById('stuPhoto').style.background=s.color;
+  document.getElementById('stuPhoto').textContent=initials;
+  document.getElementById('stuName').textContent=s.name;
+  document.getElementById('stuInfo').textContent=`Grade ${s.grade} · ${s.room}`;
+  document.getElementById('greeterNextBtn').disabled=true;
+  const list=document.getElementById('guardianList'); list.innerHTML='';
+  getGuardians(s.name).forEach((g,i)=>{
+    const div=document.createElement('div'); div.className='guardian-card'; div.id='gc'+i;
+    div.innerHTML=`<div class="g-avatar">${g.name.split(' ').map(n=>n[0]).join('')}</div><div style="flex:1"><div class="g-name">${g.name}</div><div class="g-rel">${g.rel}</div><div class="g-phone">${g.phone}</div></div><div class="g-sel-indicator" id="gi${i}"></div>`;
+    div.addEventListener('click',()=>selectGuardian(i,g));
+    list.appendChild(div);
+  });
+  goTo('studentDetailScreen');
+}
+
+function selectGuardian(i,g){
+  currentGuardian=g;
+  document.querySelectorAll('.guardian-card').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('.g-sel-indicator').forEach(x=>x.classList.remove('on'));
+  document.getElementById('gc'+i).classList.add('sel');
+  document.getElementById('gi'+i).classList.add('on');
+  document.getElementById('greeterNextBtn').disabled=false;
+}
+
+// ID Modal
+function showIdModal(context){
+  if(!currentGuardian)return;
+  document.getElementById('modalGuardianName').textContent=currentGuardian.name;
+  document.getElementById('modalGuardianRel').textContent=currentGuardian.rel;
+  idModalCallback=context;
+  document.getElementById('idModal').classList.add('open');
+}
+
+function idResult(verified){
+  document.getElementById('idModal').classList.remove('open');
+  if(!verified){ alert('Unable to verify. Please contact an administrator.'); return; }
+  if(idModalCallback==='greeter'){
+    // Add to runner queue
+    greeterQueue.push({student:currentStudent,guardian:currentGuardian});
+    buildRunnerQueue();
+    goTo('runnerScreen');
+  } else if(idModalCallback==='reunify'){
+    // Go to signature
+    document.getElementById('sigStuName').textContent=currentStudent.name;
+    document.getElementById('sigGName').textContent=currentGuardian.name;
+    const now=new Date();
+    document.getElementById('sigTime').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    clearSig();
+    goTo('signatureScreen');
+  }
+}
+
+// RUNNER
+function buildRunnerQueue(){
+  const q=document.getElementById('runnerQueue'); q.innerHTML='';
+  if(!greeterQueue.length){
+    document.getElementById('runnerSub').textContent='Waiting for greeter to check in students…';
+    document.getElementById('retrieveBtn').disabled=true;
+    return;
+  }
+  document.getElementById('runnerSub').textContent=`${greeterQueue.length} student${greeterQueue.length!==1?'s':''} ready for retrieval`;
+  document.getElementById('retrieveBtn').disabled=false;
+  greeterQueue.forEach((item,i)=>{
+    const s=item.student; const initials=s.name.split(' ').map(n=>n[0]).join('');
+    const div=document.createElement('div'); div.className='queue-card';
+    div.innerHTML=`<div class="queue-num">${i+1}</div><div class="s-avatar" style="background:${s.color};width:36px;height:36px;font-size:13px;font-weight:700;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div><div><div class="queue-name">${s.name}</div><div class="queue-grade">Grade ${s.grade} · ${s.room} — pickup: ${item.guardian.name}</div></div>`;
+    q.appendChild(div);
+  });
+}
+
+function retrieveStudent(){
+  if(!greeterQueue.length)return;
+  const item=greeterQueue[0];
+  currentStudent=item.student;
+  currentGuardian=item.guardian;
+  // populate reunify screen
+  const initials=currentStudent.name.split(' ').map(n=>n[0]).join('');
+  document.getElementById('reuniPhoto').style.background=currentStudent.color;
+  document.getElementById('reuniPhoto').textContent=initials;
+  document.getElementById('reuniStuName').textContent=currentStudent.name;
+  document.getElementById('reuniStuInfo').textContent=`Grade ${currentStudent.grade} · ${currentStudent.room}`;
+  document.getElementById('reuniGName').textContent=currentGuardian.name;
+  document.getElementById('reuniGRel').textContent=currentGuardian.rel;
+  document.getElementById('reuniGPhone').textContent=currentGuardian.phone;
+  goTo('reunifyScreen');
+}
+
+// SIGNATURE
+let sigDrawing=false, sigCtx=null;
+function clearSig(){
+  const c=document.getElementById('sigCanvas');
+  if(!sigCtx) sigCtx=c.getContext('2d');
+  sigCtx.clearRect(0,0,c.width,c.height);
+  sigCtx.fillStyle='#FAFAFA';
+  sigCtx.fillRect(0,0,c.width,c.height);
+  // Signature line
+  sigCtx.strokeStyle='#E5E5EA'; sigCtx.lineWidth=1;
+  sigCtx.beginPath(); sigCtx.moveTo(16,110); sigCtx.lineTo(c.width-16,110); sigCtx.stroke();
+}
+
+function initSig(){
+  const c=document.getElementById('sigCanvas');
+  sigCtx=c.getContext('2d');
+  clearSig();
+  sigCtx.strokeStyle='#1C1C1E'; sigCtx.lineWidth=2.5; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+  const getPos=e=>{ const r=c.getBoundingClientRect(),t=e.touches?e.touches[0]:e; return{x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)}; };
+  c.addEventListener('mousedown',e=>{ sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
+  c.addEventListener('touchstart',e=>{ sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); e.preventDefault(); },{passive:false});
+  c.addEventListener('mousemove',e=>{ if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
+  c.addEventListener('touchmove',e=>{ if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); e.preventDefault(); },{passive:false});
+  c.addEventListener('mouseup',()=>sigDrawing=false);
+  c.addEventListener('touchend',()=>sigDrawing=false);
+}
+
+function completeReunification(){
+  // Remove from queue
+  greeterQueue.shift();
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+' at '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('cMsgStu').textContent=currentStudent.name;
+  document.getElementById('cMsgG').textContent=currentGuardian.name;
+  document.getElementById('cMsgSchool').textContent=userSchool;
+  document.getElementById('cMsgDate').textContent=dateStr;
+  document.getElementById('cMsgTime').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  goTo('completeScreen');
+}
+
+// Observe signatureScreen activation to init canvas
+const obs=new MutationObserver(()=>{ if(document.getElementById('signatureScreen').classList.contains('active')) initSig(); });
+obs.observe(document.getElementById('signatureScreen'),{attributeFilter:['class']});
+
+buildRoster();
+</script>
+
+</body>
+</html>
